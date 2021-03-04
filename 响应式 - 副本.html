@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	
+</body>
+<script>
+	let active;
+
+	let nextTick = (cb)=>{
+		Promise.resolve().then(cb);
+	}
+
+	let queue=[];
+	let queueJobs = (job)=>{
+		if(!queue.includes(job)){
+			queue.push(job);
+		}
+		nextTick(flushJobs);
+	}
+	let flushJobs = ()=>{
+		console.log(11111)
+		let job;
+		while((job=queue.shift())!==undefined){
+			job();
+		}
+	}
+	/* let flushJobs = (foo)=>{
+		let job;
+		while((job=arr.shift())!==undefined){
+			foo.push(job)
+		}
+	}
+	function foos(){
+		flushJobs(arr1)
+		flushJobs(arr2)
+		flushJobs(arr3)
+	} */
+	
+	class Dep{
+		constructor(){
+			this.deps = new Set;
+		}
+		depend(){
+			if(active){
+				this.deps.add(active);
+			}
+		}
+		notify(){
+			this.deps.forEach(item=>{
+				queueJobs(item);
+			})
+		}
+	}
+	var dep = new Dep;
+	function ref(obj){
+		let val = obj.value;
+		return Object.defineProperty(obj,'value',{
+			get: function(){
+				//收集依赖
+				dep.depend();
+				return val;
+			},
+			set: function(newVal){
+				val = newVal;
+				//响应更新
+				dep.notify()
+			}
+		})
+	}
+	
+
+	
+	function onXYZchange(cb){
+		active = cb;
+		cb();
+		active = null;
+	}
+
+	let x = ref({value:1});
+	let y = ref({value:2});
+	let z = ref({value:3});
+	onXYZchange(()=>{
+		let tpl = `hello ${x.value} ${y.value} ${z.value}`
+		console.log(tpl)
+		document.write(tpl);
+	})
+	
+
+	x.value = 2;
+	y.value = 3;
+	z.value = 4;
+
+</script>
+</html>

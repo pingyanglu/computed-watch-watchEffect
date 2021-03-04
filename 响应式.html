@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	
+</body>
+<script>
+	let x = {};
+	x.value = 1
+	let y;
+	let active;
+
+	
+	class Dep{
+		constructor(){
+			this.deps = new Set;
+		}
+		depend(){
+			if(active){
+				this.deps.add(active);
+			}
+		}
+		notify(){
+			this.deps.forEach(item=>{
+				item();
+			})
+		}
+	}
+	var dep = new Dep;
+	function ref(initValue){
+		let val = initValue;
+		return Object.defineProperty({},'value',{
+			get: function(){
+				//收集依赖
+				dep.depend();
+				return val;
+			},
+			set: function(newVal){
+				val = newVal;
+				//响应更新
+				dep.notify()
+			}
+		})
+	}
+	
+
+	
+	function onXchange(cb){
+		active = cb;
+		cb();
+		active = null;
+	}
+
+	x = ref(0);
+	y = ref(0);
+	z = ref(0);
+	onXchange(()=>{
+		let tpl = `hello ${x.value} ${y.value} ${z.value}`
+		console.log(tpl)
+		document.write(tpl);
+	})
+	
+
+	y.value = 2;
+	z.value = 3;
+
+</script>
+</html>
